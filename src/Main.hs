@@ -25,6 +25,7 @@ import qualified SDL.Font as F
 import SDL.Image as SI
 import System.IO.Unsafe
 import Types
+import qualified Debug.Trace as Tr
 
 runPhysical :: PhysicalState -> SF InputState PhysicalState
 runPhysical state@(PhysicalState (StretchCollObj origSize (CollObj iPC iP)) iE) =
@@ -50,7 +51,7 @@ runDeathResetSwitch :: GameState -> SF InputState GameState
 runDeathResetSwitch game =
   switch
     (run game)
-    runDeathResetSwitch
+    (Tr.trace "Dead" $ runDeathResetSwitch)
 
 collided :: SF PhysicalState (Bool, Event ())
 collided = proc (PhysicalState player enemies) -> do
@@ -109,7 +110,7 @@ main = do
   runSDL
     True
     S.Windowed
-    "FRP Lunar Lander"
+    "Simple game 3"
     getResources
     ( \savedGameState renderer senseInput resources -> do
         _ <- reactimate (pure NoEvent) senseInput (\_ -> render renderer resources) (loadOldGameState savedGameState myMVar)

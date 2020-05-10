@@ -73,7 +73,6 @@ instance FromJSON PhysicalState
 instance FromJSON SpriteSelect
 instance (FromJSON a, FromJSON spriteSelect) => FromJSON (StretchCollObj a spriteSelect)
 
-
 instance ToJSON GameState
 instance ToJSON CameraState
 instance ToJSON PhysicalState

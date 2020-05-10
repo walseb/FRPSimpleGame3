@@ -9,7 +9,8 @@ import Linear
 import Types
 
 boxColl :: (RealFloat a) => [[V2 a]]
-boxColl = [[(V2 0 0), (V2 0 1), (V2 1 1), (V2 1 0)]]
+-- boxColl = [[(V2 0 0), (V2 0 1), (V2 1 1), (V2 1 0)]]
+boxColl = [[]]
 
 moveBlock mod a = a + (99 * mod)
 

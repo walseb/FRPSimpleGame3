@@ -32,9 +32,15 @@ executable FRPSimpleGame3
                 -- SDL TFF dependency
                 , text
 
-                , bearriver
+
                 , template-haskell
                 , FRPEngine == 0.2.*
 
                 -- Hotswapping
                 , aeson
+
+                , bearriver
+                -- , dunai
+
+                , mtl
+                , transformers
