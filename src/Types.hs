@@ -47,10 +47,20 @@ data StretchCollObj a spriteSelect =
 
 makeLenses ''StretchCollObj
 
+data Player a spriteSelect =
+  Player
+  {
+    _pColl :: StretchCollObj a SpriteSelect,
+    _fuel :: a
+  }
+  deriving (Generic, Show)
+
+makeLenses ''Player
+
 data PhysicalState
   = PhysicalState
   {
-    _player :: StretchCollObj Double SpriteSelect,
+    _player :: Player Double SpriteSelect,
     _enemies :: [StretchCollObj Double SpriteSelect]
   }
   deriving (Generic, Show)
@@ -71,10 +81,13 @@ instance FromJSON GameState
 instance FromJSON CameraState
 instance FromJSON PhysicalState
 instance FromJSON SpriteSelect
+instance (FromJSON a, FromJSON spriteSelect) => FromJSON (Player a spriteSelect)
 instance (FromJSON a, FromJSON spriteSelect) => FromJSON (StretchCollObj a spriteSelect)
+
 
 instance ToJSON GameState
 instance ToJSON CameraState
 instance ToJSON PhysicalState
 instance ToJSON SpriteSelect
+instance (ToJSON a, ToJSON spriteSelect) => ToJSON (Player a spriteSelect)
 instance (ToJSON a, ToJSON spriteSelect) => ToJSON (StretchCollObj a spriteSelect)

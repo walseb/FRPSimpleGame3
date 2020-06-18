@@ -11,14 +11,11 @@ import Control.Lens
 import Control.Monad.IO.Class
 import Data.Maybe
 import FRP.Yampa
-import FRPEngine.Collision.GJK
+import FRPEngine.Physics.Collision.GJK
 import FRPEngine.Init
 import FRPEngine.Input.Input
 import FRPEngine.Input.Types as I
-import FRPEngine.Input.Utils
-import FRPEngine.Types
 import Level
-import Linear
 import Render.SDL.Render
 import qualified SDL as S
 import qualified SDL.Font as F
@@ -26,14 +23,15 @@ import SDL.Image as SI
 import System.IO.Unsafe
 import Types
 import qualified Debug.Trace as Tr
+import Input
 
-runPhysical :: PhysicalState -> SF InputState PhysicalState
-runPhysical state@(PhysicalState (StretchCollObj origSize (CollObj iPC iP)) iE) =
+runPhysical :: PhysicalState -> SF [Input] PhysicalState
+runPhysical state@(PhysicalState iPlayer iE) =
   proc input -> do
-    p <- playerRun iP origSize -< input
-    returnA -< (player . collObj . obj) .~ p $ state
+    (p, fuel') <- playerRun iPlayer -< input
+    returnA -< ((player . fuel) .~ fuel') $ (player .~ p $ state)
 
-run :: GameState -> SF InputState (GameState, Event GameState)
+run :: GameState -> SF [Input] (GameState, Event GameState)
 run (GameState (CameraState iZ) p alive) = proc input -> do
   -- zoom <- accumHoldBy (accumLimit (V2 30 1)) iZ -< Event (input ^. I.zoom)
   physical <- runPhysical p -< input
@@ -47,7 +45,7 @@ run (GameState (CameraState iZ) p alive) = proc input -> do
       if alive then NoEvent else Event initialGame
     )
 
-runDeathResetSwitch :: GameState -> SF InputState GameState
+runDeathResetSwitch :: GameState -> SF [Input] GameState
 runDeathResetSwitch game =
   switch
     (run game)
@@ -56,7 +54,7 @@ runDeathResetSwitch game =
 collided :: SF PhysicalState (Bool, Event ())
 collided = proc (PhysicalState player enemies) -> do
   let hasCollided =
-        or (collidesObj (player ^. collObj) <$> ((^. collObj) <$> enemies))
+        or (collidesObj (player ^. (pColl . collObj)) <$> ((^. collObj) <$> enemies))
   returnA -<
     ( not hasCollided,
       case hasCollided of
@@ -73,9 +71,9 @@ collidedDeathSwitch =
 update :: GameState -> MVar GameState -> SF (Event [S.Event]) (GameState, Bool)
 update origGameState mvar =
   proc events -> do
-    newInputState <- accumHoldBy inputStateUpdate defaultKeybinds -< events
+    newInputState <- accumHoldBy updateInput keybinds -< events
     gameState <- runDeathResetSwitch origGameState -< newInputState
-    let quit = (fromJust (newInputState ^. I.quit ^? pressed))
+    let quit = quitKey keybinds
     let quit' =
           if quit
             then seq (unsafePerformIO (putMVar mvar gameState)) True
@@ -109,8 +107,8 @@ main = do
   myMVar <- newEmptyMVar
   runSDL
     True
-    S.Windowed
-    "Simple game 3"
+    S.Maximized
+    "Simple Game 2"
     getResources
     ( \savedGameState renderer senseInput resources -> do
         _ <- reactimate (pure NoEvent) senseInput (\_ -> render renderer resources) (loadOldGameState savedGameState myMVar)
